@@ -1,0 +1,29 @@
+# Query 1: Find all errors in backend logs
+fields @timestamp, @message
+| filter @message like /ERROR/
+| sort @timestamp desc
+| limit 20
+
+# Query 2: Find slow requests (latency > 1000ms)
+fields @timestamp, @message
+| filter @message like /latency/
+| sort @timestamp desc
+| limit 20
+
+# Query 3: Count requests by status code
+fields @timestamp, @message
+| filter @message like /status/
+| stats count() by status
+| sort count desc
+
+# Query 4: Find MongoDB connection errors
+fields @timestamp, @message
+| filter @message like /MongoDB/
+| sort @timestamp desc
+| limit 20
+
+# Query 5: Application startup events
+fields @timestamp, @message
+| filter @message like /Server starting/
+| sort @timestamp desc
+| limit 10

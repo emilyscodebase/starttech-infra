@@ -1,0 +1,26 @@
+{
+  "alarms": [
+    {
+      "alarm_name": "starttech-high-cpu",
+      "metric_name": "CPUUtilization",
+      "namespace": "AWS/EC2",
+      "statistic": "Average",
+      "period": 120,
+      "evaluation_periods": 2,
+      "threshold": 80,
+      "comparison_operator": "GreaterThanThreshold",
+      "alarm_description": "Alert when EC2 CPU exceeds 80%"
+    },
+    {
+      "alarm_name": "starttech-alb-5xx-errors",
+      "metric_name": "HTTPCode_ELB_5XX_Count",
+      "namespace": "AWS/ApplicationELB",
+      "statistic": "Sum",
+      "period": 60,
+      "evaluation_periods": 2,
+      "threshold": 10,
+      "comparison_operator": "GreaterThanThreshold",
+      "alarm_description": "Alert when ALB 5XX errors exceed 10"
+    }
+  ]
+}
