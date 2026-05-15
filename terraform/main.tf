@@ -10,6 +10,12 @@ terraform {
     }
   }
   required_version = ">= 1.0"
+
+  backend "s3" {
+    bucket = "starttech-terraform-state-627099234229"
+    key    = "starttech/terraform.tfstate"
+    region = "us-east-1"
+  }
 }
 
 provider "aws" {
