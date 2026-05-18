@@ -22,3 +22,8 @@ output "ecr_repository_url" {
   description = "ECR repository URL"
   value       = module.compute.ecr_repository_url
 }
+
+output "redis_endpoint" {
+  description = "Redis endpoint"
+  value       = module.compute.redis_endpoint
+}

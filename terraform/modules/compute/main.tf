@@ -118,24 +118,9 @@ resource "aws_launch_template" "backend" {
     yum install -y docker
     service docker start
     usermod -a -G docker ec2-user
-
-    # Login to ECR
-    aws ecr get-login-password --region ${var.aws_region} | docker login 
---username AWS --password-stdin 
-${aws_ecr_repository.backend.repository_url}
-
-    # Pull and run the backend
+    aws ecr get-login-password --region ${var.aws_region} | docker login --username AWS --password-stdin ${aws_ecr_repository.backend.repository_url}
     docker pull ${aws_ecr_repository.backend.repository_url}:latest
-    docker run -d \
-      -p 8080:8080 \
-      -e MONGO_URI="${var.mongo_uri}" \
-      -e JWT_SECRET_KEY="${var.jwt_secret}" \
-      -e PORT=8080 \
-      -e DB_NAME=much_todo_db \
-      -e ENABLE_CACHE=false \
-      -e LOG_LEVEL=INFO \
-      -e LOG_FORMAT=json \
-      ${aws_ecr_repository.backend.repository_url}:latest
+    docker run -d -p 8080:8080 -e MONGO_URI="${var.mongo_uri}" -e JWT_SECRET_KEY="${var.jwt_secret}" -e PORT=8080 -e DB_NAME=much_todo_db -e ENABLE_CACHE=false -e LOG_LEVEL=INFO -e LOG_FORMAT=json ${aws_ecr_repository.backend.repository_url}:latest
   EOF
   )
 
@@ -167,6 +152,61 @@ resource "aws_autoscaling_group" "backend" {
     key                 = "Name"
     value               = "${var.project_name}-backend"
     propagate_at_launch = true
+  }
+}
+
+# ElastiCache Redis Subnet Group
+resource "aws_elasticache_subnet_group" "redis" {
+  name       = "${var.project_name}-redis-subnet-group"
+  subnet_ids = var.public_subnets
+
+  tags = {
+    Name        = "${var.project_name}-redis-subnet-group"
+    Environment = var.environment
+  }
+}
+
+# ElastiCache Security Group
+resource "aws_security_group" "redis" {
+  name        = "${var.project_name}-redis-sg"
+  description = "Security group for Redis"
+  vpc_id      = var.vpc_id
+
+  ingress {
+    from_port       = 6379
+    to_port         = 6379
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2.id]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "${var.project_name}-redis-sg"
+    Environment = var.environment
+  }
+}
+
+# ElastiCache Redis Cluster
+resource "aws_elasticache_cluster" "redis" {
+  cluster_id           = "${var.project_name}-redis"
+  engine               = "redis"
+  node_type            = "cache.t3.micro"
+  num_cache_nodes      = 1
+  parameter_group_name = "default.redis7"
+  engine_version       = "7.0"
+  port                 = 6379
+  subnet_group_name    = aws_elasticache_subnet_group.redis.name
+  security_group_ids   = [aws_security_group.redis.id]
+
+  tags = {
+    Name        = "${var.project_name}-redis"
+    Environment = var.environment
   }
 }
 
